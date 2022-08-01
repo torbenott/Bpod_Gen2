@@ -207,7 +207,7 @@ switch Op
                 if p < nPanels
                     NextPanelParams = Panels.(PanelNames{p+1});
                     NextPanelSize = (length(NextPanelParams)*45) + 5;
-                    if VPos + NextPanelSize > GUIHeight
+                    if VPos + ThisPanelHeight + 45 + NextPanelSize > GUIHeight
                         Wrap = 1;
                     end
                 end
@@ -225,7 +225,7 @@ switch Op
                 end
             end
         end
-        set(BpodSystem.ProtocolFigures.ParameterGUI, 'Position', [900 100 HPos+450 MaxVPos+10]);
+        set(BpodSystem.ProtocolFigures.ParameterGUI, 'Position', [50 50 HPos+450 MaxVPos+45]);
     case 'sync'
         ParamNames = BpodSystem.GUIData.ParameterGUI.ParamNames;
         nParams = BpodSystem.GUIData.ParameterGUI.nParams;
