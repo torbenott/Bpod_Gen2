@@ -22,10 +22,10 @@ function varargout = BpodParameterGUI(varargin)
 
 % BpodParameterGUI('init', ParamStruct) - initializes a GUI with edit boxes for every field in subfield ParamStruct.GUI
 % BpodParameterGUI('sync', ParamStruct) - updates the GUI with fields of
-%       ParamStruct.GUI, if they have not been changed by the user. 
+%       ParamStruct.GUI, if they have not been changed by the user.
 %       Returns a param struct. Fields in the GUI sub-struct are read from the UI.
 
-% This version of BpodParameterGUI includes improvements 
+% This version of BpodParameterGUI includes improvements
 % from EnhancedParameterGUI, contributed by F. Carnevale
 
 global BpodSystem
@@ -55,12 +55,12 @@ switch Op
             paramPanels = zeros(1,nParameters);
             % Find any params not assigned a panel and assign to
             % new 'Parameters' panel
-            paramsInPanels = {}; 
+            paramsInPanels = {};
             for i = 1:nPanels
                 paramsInPanels = [paramsInPanels Panels.(PanelNames{i})];
             end
             paramsInDefaultPanel = {};
-            
+
             for i = 1:nParameters
                 if ~strcmp(paramNames{i}, paramsInPanels)
                     paramsInDefaultPanel = [paramsInDefaultPanel paramNames{i}];
@@ -88,6 +88,17 @@ switch Op
         MaxVPos = 0;
         BpodSystem.ProtocolFigures.ParameterGUI = figure('Position', [50 50 450 GUIHeight],'name','Parameter GUI','numbertitle','off', 'MenuBar', 'none', 'Resize', 'on');
         ParamNum = 1;
+        %---- add menu. TO 2022
+        [stub, SettingsFile] = fileparts(BpodSystem.Path.Settings);
+        stub2 = fileparts(stub); stub3=fileparts(stub2);
+        [~,Protocol] = fileparts(stub2);
+        [~,Subject] = fileparts(stub3);        
+        SettingsMenu = uimenu(BpodSystem.ProtocolFigures.ParameterGUI,'Label',['Settings: ',SettingsFile,'.']);
+        uimenu(BpodSystem.ProtocolFigures.ParameterGUI,'Label',['Protocol: ', Protocol,'.']);
+        uimenu(BpodSystem.ProtocolFigures.ParameterGUI,'Label',['Subject: ', Subject,'.']);
+        uimenu(SettingsMenu,'Label','Save','Callback',{@SettingsMenuSave_Callback});
+        uimenu(SettingsMenu,'Label','Save as...','Callback',{@SettingsMenuSaveAs_Callback,SettingsMenu});
+        %---------
         for p = 1:nPanels
             ThisPanelParamNames = Panels.(PanelNames{p});
             ThisPanelParamNames = ThisPanelParamNames(end:-1:1);
@@ -219,7 +230,7 @@ switch Op
                         Params.GUI.(ThisParamName) = GUIParam;
                     elseif ~strcmpi(Params.GUI.(ThisParamName), ThisParamLastValue)
                         set(ThisParamHandle, 'String', GUIParam);
-                    end                      
+                    end
                 case 2 % Text
                     GUIParam = ThisParamCurrentValue;
                     Text = GUIParam;
@@ -254,16 +265,71 @@ switch Op
                         end
                     elseif any(argData(:) ~= ThisParamLastValue(:)) % Change originated in TaskParameters propagates to the GUI
                         ThisParamHandle.Data = argData;
-                    end                    
+                    end
             end
             if ThisParamStyle ~= 5
                 BpodSystem.GUIData.ParameterGUI.LastParamValues{p} = Params.GUI.(ThisParamName);
             end
         end
+    case 'get'
+        ParamNames = BpodSystem.GUIData.ParameterGUI.ParamNames;
+        nParams = BpodSystem.GUIData.ParameterGUI.nParams;
+        for p = 1:nParams
+            ThisParamName = ParamNames{p};
+            ThisParamStyle = BpodSystem.GUIData.ParameterGUI.Styles(p);
+            ThisParamHandle = BpodSystem.GUIHandles.ParameterGUI.Params(p);
+            switch ThisParamStyle
+                case 1 % Edit
+                    GUIParam = str2double(get(ThisParamHandle, 'String'));
+                    Params.GUI.(ThisParamName) = GUIParam;
+                case 8 % Edit Text
+                    GUIParam = get(ThisParamHandle, 'String');
+                    Params.GUI.(ThisParamName) = GUIParam;
+                case 2 % Text
+                    GUIParam = get(ThisParamHandle, 'String');
+                    GUIParam = str2double(GUIParam);
+                    Params.GUI.(ThisParamName) = GUIParam;
+                case 3 % Checkbox
+                    GUIParam = get(ThisParamHandle, 'Value');
+                    Params.GUI.(ThisParamName) = GUIParam;
+                case 4 % Popupmenu
+                    GUIParam = get(ThisParamHandle, 'Value');
+                    Params.GUI.(ThisParamName) = GUIParam;
+                case 5 % Pushbutton
+                    GUIParam = get(ThisParamHandle, 'Value');
+                    Params.GUI.(ThisParamName) = GUIParam;
+                case 7 % Table
+                    GUIParam = ThisParamHandle.Data;
+                    columnNames = fieldnames(Params.GUI.(ThisParamName));
+                    for iColumn = 1:numel(columnNames)
+                        Params.GUI.(ThisParamName).(columnNames{iColumn}) = GUIParam(:,iColumn);
+                    end
+            end
+        end
     otherwise
-    error('ParameterGUI must be called with a valid op code: ''init'' or ''sync''');
+        error('ParameterGUI must be called with a valid op code: ''init'' or ''sync''');
 end
 if verLessThan('MATLAB', '8.4')
     drawnow;
 end
 varargout{1} = Params;
+
+function SettingsMenuSave_Callback(~, ~, ~)
+global BpodSystem
+global TaskParameters
+ProtocolSettings = BpodParameterGUI('get',TaskParameters);
+save(BpodSystem.Path.Settings,'ProtocolSettings')
+
+function SettingsMenuSaveAs_Callback(~, ~, SettingsMenuHandle)
+global BpodSystem
+global TaskParameters
+ProtocolSettings = BpodParameterGUI('get',TaskParameters);
+[file,path] = uiputfile('*.mat','Select a Bpod ProtocolSettings file.',BpodSystem.Path.Settings);
+if file>0
+    save(fullfile(path,file),'ProtocolSettings')
+    BpodSystem.Path.Settings = fullfile(path,file);
+    [~,SettingsName] = fileparts(file);
+    set(SettingsMenuHandle,'Label',['Settings: ',SettingsName,'.']);
+end
+
+
