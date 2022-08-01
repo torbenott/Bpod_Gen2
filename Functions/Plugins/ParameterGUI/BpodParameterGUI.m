@@ -336,14 +336,44 @@ varargout{1} = Params;
 %--- add menu callback functions. TO 2022
 function SettingsMenuSave_Callback(~, ~, ~)
 global BpodSystem
+%need to update to latest GUI settings to make sure to save latest. messy
+%because BpodSystem is nowhere guaranteed to contain this. Check a few
+%places and then update.
 global TaskParameters
-ProtocolSettings = BpodParameterGUI('get',TaskParameters);
+S = TaskParameters;
+if isempty(S)
+    S=BpodSystem.ProtocolSettings;
+    if isempty(S) || isempty(fieldnames(S))
+        if isfield(BpodSystem.Data,'TrialSettings')
+            S=BpodSystem.Data.TrialSettings(end);
+            if isempty(S)
+                warning('No current settings found. Saved settings file might not be complete.')
+            end
+        end
+    end
+end
+ProtocolSettings = BpodParameterGUI('get',S);
 save(BpodSystem.Path.Settings,'ProtocolSettings')
 
 function SettingsMenuSaveAs_Callback(~, ~, SettingsMenuHandle)
 global BpodSystem
+%need to update to latest GUI settings to make sure to save latest. messy
+%because BpodSystem is nowhere guaranteed to contain this. Check a few
+%places and then update.
 global TaskParameters
-ProtocolSettings = BpodParameterGUI('get',TaskParameters);
+S = TaskParameters;
+if isempty(S)
+    S=BpodSystem.ProtocolSettings;
+    if isempty(S) || isempty(fieldnames(S))
+        if isfield(BpodSystem.Data,'TrialSettings')
+            S=BpodSystem.Data.TrialSettings(end);
+            if isempty(S)
+                warning('No current settings found. Saved settings file might not be complete.')
+            end
+        end
+    end
+end
+ProtocolSettings = BpodParameterGUI('get',S);
 [file,path] = uiputfile('*.mat','Select a Bpod ProtocolSettings file.',BpodSystem.Path.Settings);
 if file>0
     save(fullfile(path,file),'ProtocolSettings')
