@@ -136,6 +136,13 @@ switch Opstring
             end
         end
     case 'Stop'
+        %----- execute user kill script. TO 2022.
+        try
+            Protocol=BpodSystem.Status.CurrentProtocolName;
+            run(fullfile(BpodSystem.Path.ProtocolFolder,Protocol,'UserKillScript.m'));
+        catch
+        end
+        %------
         if ~isempty(BpodSystem.Status.CurrentProtocolName)
             disp(' ')
             disp([BpodSystem.Status.CurrentProtocolName ' ended'])
