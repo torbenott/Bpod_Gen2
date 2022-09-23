@@ -47,6 +47,8 @@ else
     TheTime = now;
     TE.Info.SessionStartTime_UTC = datestr(TheTime, 13);
     TE.Info.SessionStartTime_MATLAB = TheTime;
+    
+    TE=AddGitInfoToSessionData(TE);
 end
 TE.nTrials = TrialNum;
 %% Parse and add raw events for this trial
