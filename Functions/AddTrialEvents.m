@@ -47,6 +47,8 @@ else
     TheTime = now;
     TE.Info.SessionStartTime_UTC = datestr(TheTime, 13);
     TE.Info.SessionStartTime_MATLAB = TheTime;
+    
+    TE=AddGitInfoToSessionData(TE);
 end
 TE.nTrials = TrialNum;
 %% Parse and add raw events for this trial
@@ -90,6 +92,7 @@ TE.RawData.OriginalStateData{TrialNum} = RawTrialEvents.States;
 TE.RawData.OriginalEventData{TrialNum} = RawTrialEvents.Events;
 TE.RawData.OriginalStateTimestamps{TrialNum} = RawTrialEvents.StateTimestamps;
 TE.RawData.OriginalEventTimestamps{TrialNum} = RawTrialEvents.EventTimestamps;
+TE.TrialSettings(:, TrialNum) = BpodSystem.GUIData.ParameterGUI.LastParamValues;
 TE.TrialStartTimestamp(TrialNum) = RawTrialEvents.TrialStartTimestamp;
 TE.TrialEndTimestamp(TrialNum) = RawTrialEvents.TrialEndTimestamp;
 TE.RawData.StateMachineErrorCodes{TrialNum} = RawTrialEvents.ErrorCodes;
